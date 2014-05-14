@@ -31,14 +31,21 @@ func usage() string {
             --version      Show version.`
 }
 
+type Command []string
+
 type Config struct {
-    Commit   string     `json:"commit"`
-    Commands [][]string `json:"commands"`
+    Commit    string    `json:"commit"`
+    BuildCmds []Command `json:"build_cmds"`
+    TestCmds  []Command `json:"test_cmds"`
 }
 
 type Simplest struct {
     Redis redis.Conn
     Docker *docker.Client
+}
+
+func (s *Simplest) newInstance(image string, path string, commit string) {
+
 }
 
 //runFromConfig takes a simplest config file and uses it to
@@ -57,14 +64,11 @@ func runFromConfig(configFile string) error {
         return err
     }
 
-    fmt.Println(conf)
-
     return nil
 }
 
 //serveFromConfig starts a daemon uses redis and docker to start up instances of a project from testing.
 func serveFromConfig(redisHost string, servePort string) {
-
     var err error
 
     //Create our main struct
@@ -89,20 +93,20 @@ func serveFromConfig(redisHost string, servePort string) {
 }
 
 func main() {
+    var err error
 
     //Parse args
     args, _ := docopt.Parse(usage(), nil, true, fmt.Sprintf("simplest-ci %s", version), false)
 
     //See what we're doing.
     if args["run"].(bool) {
-        runFromConfig(args["--config"].(string))
+        err = runFromConfig(args["--config"].(string))
+        if err != nil {
+            panic(err)
+        }
     } else {
         redisHost := args["--redis"].(string)
         servePort := args["--port"].(string)
         serveFromConfig(redisHost, servePort)
     }
-}
-
-func (s *Simplest) newInstance(image string, path string, commit string) {
-
 }
