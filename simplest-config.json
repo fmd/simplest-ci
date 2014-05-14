@@ -1,0 +1,11 @@
+{
+    "commit":"ab343adec",
+    "build_cmds":[
+        ["bin/phing", "build"]
+    ],
+    "test_cmds":[
+        ["bin/phing", "project:test:spec"],
+        ["bin/phing", "project:test:api"],
+        ["bin/phing", "project:test:db"]
+    ]
+}
