@@ -5,7 +5,9 @@ import (
     "github.com/go-martini/martini"
     "github.com/fsouza/go-dockerclient"
     "github.com/garyburd/redigo/redis"
+    "net/http"
     "time"
+    "log"
     "fmt"
 )
 
@@ -14,30 +16,31 @@ var version string = "0.0.1"
 func usage() string {
     return `simplest-ci
         Usage:
-            simplest-ci [--port=<port>] [--redis=<redis>]
+            simplest-ci [--redis=<redis>] [--port=<port>]
             simplest-ci --help
             simplest-ci --version
 
         Options:
-            -r | --redis The redis host string [default: localhost:6379].
-            -p | --port  The port to listen on [default: 5000].
-            --help       Show this screen.
-            --version    Show version.`
+            -p | --port   The port to listen on [default: 5000].
+            -r | --redis  The redis host string [default: localhost:6379].
+            --help        Show this screen.
+            --version     Show version.`
 }
 
 type Simplest struct {
-    Redis *redis.Conn
+    Redis redis.Conn
     Docker *docker.Client
 }
 
 func main() {
+    var err error
     args, _ := docopt.Parse(usage(), nil, true, fmt.Sprintf("simplest-ci %s", version), false)
 
-    redis := args["--redis"].(string)
-    port := args["--port"].(string)
+    redisHost := args["--redis"].(string)
+    servePort := args["--port"].(string)
 
     s := &Simplest{}
-    s.Redis, err := redis.DialTimeout("tcp", redis, 0, 1*time.Second, 1*time.Second)
+    s.Redis, err = redis.DialTimeout("tcp", redisHost, 0, 1*time.Second, 1*time.Second)
     if err != nil {
         panic(err)
     }
@@ -49,5 +52,5 @@ func main() {
     }
 
     m := martini.Classic()
-    m.Run()
+    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s",servePort), m))
 }
